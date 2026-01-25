@@ -1,0 +1,13 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Compiled files
+out/
+target/
+
+# Environment / secrets
+.env
+
+# OS
+.DS_Store
