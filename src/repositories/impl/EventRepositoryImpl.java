@@ -17,7 +17,7 @@ public class EventRepositoryImpl implements EventRepository {
     }
 
     @Override
-    public boolean create(Event event) {
+    public void save(Event event) {
         String sql = "insert into events(name, event_date, venue_id) values (?, ?, ?)";
         try (Connection con = db.getConnection();
              PreparedStatement st = con.prepareStatement(sql)) {
@@ -26,13 +26,12 @@ public class EventRepositoryImpl implements EventRepository {
             st.setDate(2, Date.valueOf(event.getDate()));
             st.setInt(3, event.getVenueId());
             st.execute();
-            return true;
 
         } catch (SQLException e) {
             System.out.println(e.getMessage());
-            return false;
         }
     }
+
 
     @Override
     public Event findById(int id) {

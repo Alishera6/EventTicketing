@@ -13,11 +13,11 @@ public class EventService {
         this.repo = repo;
     }
 
-    public boolean createEvent(Event event) {
+    public void createEvent(Event event) {
         if (event.getName() == null || event.getName().isEmpty()) {
             throw new RuntimeException("Event name cannot be empty");
         }
-        return repo.create(event);
+        repo.save(event);
     }
 
     public Event getEventById(int id) {
