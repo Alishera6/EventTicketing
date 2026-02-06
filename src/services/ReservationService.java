@@ -3,6 +3,7 @@ package services;
 import entities.Reservation;
 import repositories.interfaces.ReservationRepository;
 import repositories.interfaces.SeatRepository;
+
 import java.util.List;
 
 public class ReservationService {
@@ -26,20 +27,17 @@ public class ReservationService {
             throw new IllegalArgumentException("Invalid seat ID");
         }
 
-        // Check if seat is available
+        // Check if seat exists and is available (availability = no reservation rows for this seat)
         if (!seatRepo.isSeatAvailable(reservation.getSeatId())) {
-            throw new RuntimeException("Seat is not available");
+            throw new RuntimeException("Seat is not available (already booked)");
         }
 
-        // Check if seat is already reserved for this event
+        // Optional: if you keep this method in ReservationRepository, it can prevent duplicates for same event+seat
         if (reservationRepo.existsForSeatAndEvent(reservation.getSeatId(), reservation.getEventId())) {
             throw new RuntimeException("Seat is already reserved for this event");
         }
 
-        // Reserve the seat
-        seatRepo.updateStatus(reservation.getSeatId(), "RESERVED");
-
-        // Create reservation
+        // Create reservation (NO updateStatus, because seats table has no status column)
         return reservationRepo.create(reservation);
     }
 
@@ -75,10 +73,8 @@ public class ReservationService {
             throw new RuntimeException("Reservation not found");
         }
 
-        // Release the seat
-        seatRepo.updateStatus(reservation.getSeatId(), "AVAILABLE");
-
-        // Cancel reservation
+        // We DO NOT update seat status (no status column).
+        // Cancelling reservation simply deletes/marks reservation as cancelled.
         return reservationRepo.cancelReservation(reservationId);
     }
 }
