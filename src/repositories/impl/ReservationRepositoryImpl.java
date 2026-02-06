@@ -18,7 +18,8 @@ public class ReservationRepositoryImpl implements ReservationRepository {
 
     @Override
     public boolean create(Reservation reservation) {
-        String sql = "insert into reservations(event_id, seat_id, customer_name) values (?, ?, ?)";
+
+        String sql = "insert into reservations(event_id, seat_id, customer_name, ticket_type, price) values (?, ?, ?, ?, ?)";
 
         try (Connection con = db.getConnection();
              PreparedStatement st = con.prepareStatement(sql)) {
@@ -26,6 +27,9 @@ public class ReservationRepositoryImpl implements ReservationRepository {
             st.setInt(1, reservation.getEventId());
             st.setInt(2, reservation.getSeatId());
             st.setString(3, reservation.getCustomerName());
+            st.setString(4, reservation.getTicketType());
+            st.setDouble(5, reservation.getPrice());
+
             st.executeUpdate();
             return true;
 
@@ -38,6 +42,7 @@ public class ReservationRepositoryImpl implements ReservationRepository {
 
     @Override
     public Reservation findById(int id) {
+
         String sql = "select * from reservations where id = ?";
 
         try (Connection con = db.getConnection();
@@ -47,25 +52,20 @@ public class ReservationRepositoryImpl implements ReservationRepository {
             ResultSet rs = st.executeQuery();
 
             if (rs.next()) {
-                return new Reservation(
-                        rs.getInt("id"),
-                        rs.getInt("event_id"),
-                        rs.getInt("seat_id"),
-                        rs.getString("customer_name")
-                );
+                return map(rs);
             }
-            return null;
 
         } catch (SQLException e) {
-            System.out.println("Error finding reservation: " + e.getMessage());
             e.printStackTrace();
-            return null;
         }
+
+        return null;
     }
 
     @Override
     public List<Reservation> findAll() {
-        List<Reservation> reservations = new ArrayList<>();
+
+        List<Reservation> list = new ArrayList<>();
         String sql = "select * from reservations";
 
         try (Connection con = db.getConnection();
@@ -73,25 +73,20 @@ public class ReservationRepositoryImpl implements ReservationRepository {
              ResultSet rs = st.executeQuery(sql)) {
 
             while (rs.next()) {
-                reservations.add(new Reservation(
-                        rs.getInt("id"),
-                        rs.getInt("event_id"),
-                        rs.getInt("seat_id"),
-                        rs.getString("customer_name")
-                ));
+                list.add(map(rs));
             }
 
         } catch (SQLException e) {
-            System.out.println("Error getting all reservations: " + e.getMessage());
             e.printStackTrace();
         }
 
-        return reservations;
+        return list;
     }
 
     @Override
     public List<Reservation> findByEventId(int eventId) {
-        List<Reservation> reservations = new ArrayList<>();
+
+        List<Reservation> list = new ArrayList<>();
         String sql = "select * from reservations where event_id = ?";
 
         try (Connection con = db.getConnection();
@@ -101,25 +96,20 @@ public class ReservationRepositoryImpl implements ReservationRepository {
             ResultSet rs = st.executeQuery();
 
             while (rs.next()) {
-                reservations.add(new Reservation(
-                        rs.getInt("id"),
-                        rs.getInt("event_id"),
-                        rs.getInt("seat_id"),
-                        rs.getString("customer_name")
-                ));
+                list.add(map(rs));
             }
 
         } catch (SQLException e) {
-            System.out.println("Error getting reservations by event: " + e.getMessage());
             e.printStackTrace();
         }
 
-        return reservations;
+        return list;
     }
 
     @Override
     public List<Reservation> findByCustomer(String customerName) {
-        List<Reservation> reservations = new ArrayList<>();
+
+        List<Reservation> list = new ArrayList<>();
         String sql = "select * from reservations where customer_name = ?";
 
         try (Connection con = db.getConnection();
@@ -129,36 +119,28 @@ public class ReservationRepositoryImpl implements ReservationRepository {
             ResultSet rs = st.executeQuery();
 
             while (rs.next()) {
-                reservations.add(new Reservation(
-                        rs.getInt("id"),
-                        rs.getInt("event_id"),
-                        rs.getInt("seat_id"),
-                        rs.getString("customer_name")
-                ));
+                list.add(map(rs));
             }
 
         } catch (SQLException e) {
-            System.out.println("Error getting reservations by customer: " + e.getMessage());
             e.printStackTrace();
         }
 
-        return reservations;
+        return list;
     }
 
     @Override
-    public boolean cancelReservation(int reservationId) {
-        // Самый простой cancel: удалить запись.
+    public boolean cancelReservation(int id) {
+
         String sql = "delete from reservations where id = ?";
 
         try (Connection con = db.getConnection();
              PreparedStatement st = con.prepareStatement(sql)) {
 
-            st.setInt(1, reservationId);
-            int rows = st.executeUpdate();
-            return rows > 0;
+            st.setInt(1, id);
+            return st.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            System.out.println("Error canceling reservation: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -166,7 +148,7 @@ public class ReservationRepositoryImpl implements ReservationRepository {
 
     @Override
     public boolean existsForSeatAndEvent(int seatId, int eventId) {
-        // Никакого status — просто проверяем, есть ли уже бронь на это место для этого события
+
         String sql = "select count(*) as cnt from reservations where seat_id = ? and event_id = ?";
 
         try (Connection con = db.getConnection();
@@ -174,17 +156,28 @@ public class ReservationRepositoryImpl implements ReservationRepository {
 
             st.setInt(1, seatId);
             st.setInt(2, eventId);
-            ResultSet rs = st.executeQuery();
 
+            ResultSet rs = st.executeQuery();
             if (rs.next()) {
                 return rs.getInt("cnt") > 0;
             }
-            return false;
 
         } catch (SQLException e) {
-            System.out.println("Error checking reservation existence: " + e.getMessage());
             e.printStackTrace();
-            return false;
         }
+
+        return false;
+    }
+
+    // helper mapper
+    private Reservation map(ResultSet rs) throws SQLException {
+        return new Reservation(
+                rs.getInt("id"),
+                rs.getInt("event_id"),
+                rs.getInt("seat_id"),
+                rs.getString("customer_name"),
+                rs.getString("ticket_type"),
+                rs.getDouble("price")
+        );
     }
 }

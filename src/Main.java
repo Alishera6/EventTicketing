@@ -15,7 +15,8 @@ public class Main {
 
         try {
             // 1) DB via interface
-            IDB db = new PostgresDB();
+            PostgresDB db = PostgresDB.getInstance();
+
 
             // 2) Repositories via interfaces
             EventRepository eventRepo = new EventRepositoryImpl(db);
@@ -59,7 +60,9 @@ public class Main {
 
             System.out.println("4) Making reservation...");
             // reservation: (eventId, seatId, customerName)
-            reservationService.createReservation(new Reservation(eventId, seatIdToCheck, "John Doe"));
+            Reservation reservation =
+                    new Reservation(eventId, seatIdToCheck, "John Doe", "VIP", 0);
+
 
             System.out.println("\n5) All Events:");
             for (Event e : eventService.getAllEvents()) {
